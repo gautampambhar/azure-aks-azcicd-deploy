@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-cpr
+  annotations:
+    kubernetes.io/ingress.class: nginx  
+spec:
+  defaultBackend: # if you don't want to create path for this component 
+    service:
+      name: usermgmt-webapp-clusterip-service
+      port:
+        number: 80
+  rules:
+    - http:
+        paths:
+          - path: /app1 # any request comes from browser with /app1 will be redirected to cluster IP of app1-nginx-clusterip-service service 
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-nginx-clusterip-service
+                port: 
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-nginx-clusterip-service
+                port: 
+                  number: 80  
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: usermgmt-webapp-clusterip-service
+#                port: 
+#                  number: 80                  
+                                                 
+                  
+      
+

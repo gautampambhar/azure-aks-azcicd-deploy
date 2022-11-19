@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  # storageClassName - choose from available storage class // kubectl get sc
+  storageClassName: managed-premium # metedata --> name (in the storage class yaml))
+  resources:
+    requests:
+      storage: 5Gi      

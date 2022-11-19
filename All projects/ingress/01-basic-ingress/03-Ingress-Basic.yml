@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginxapp1-ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx  # specify WHICHever controller you use
+spec:
+  rules:
+    - http:
+        paths:
+          - path: / # root
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-nginx-clusterip-service # service name
+                port: 
+                  number: 80
+      
+

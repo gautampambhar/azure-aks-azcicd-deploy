@@ -1,0 +1,7 @@
+{
+  "tenantId": "88ghgggfghg-5676-4e1hjhjj4-9jh5d-9878676",
+  "subscriptionId": "88ghgggfghg-5676-4e1hjhjj4-9jh5d-9878676",
+  "resourceGroup": "aks-test-rg", 
+  "useManagedIdentityExtension": true,
+  "userAssignedIdentityID": "hjkhjk87-98fe-8ygo-u9uij-0987654sdfghjk"
+}
