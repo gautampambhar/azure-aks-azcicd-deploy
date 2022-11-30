@@ -35,23 +35,23 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
   default_node_pool {
     name                 = "systempool"
-    vm_size              = "Standard_DS2_v2"
+    vm_size              = var.system_pool_vm_size
     orchestrator_version = data.azurerm_kubernetes_service_versions.current.latest_version
     zones   = [1, 2, 3]
     enable_auto_scaling  = true
-    max_count            = 3
-    min_count            = 1
-    os_disk_size_gb      = 30
-    type                 = "VirtualMachineScaleSets"
+    max_count            = var.system_pool_autoscale_max_count
+    min_count            = var.system_pool_autoscale_min_count
+    os_disk_size_gb      = var.system_pool_os_disk_size_gb
+    type                 = var.system_pool_type
     node_labels = {
       "nodepool-type"    = "system"
-      "environment"      = "dev"
+      "environment"      = var.environment
       "nodepoolos"       = "linux"
       "app"              = "system-apps" 
     } 
    tags = {
       "nodepool-type"    = "system"
-      "environment"      = "dev"
+      "environment"      = var.environment
       "nodepoolos"       = "linux"
       "app"              = "system-apps" 
    } 
@@ -94,6 +94,6 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
   tags = {
-    Environment = "dev"
+    Environment = var.environment
   }
 }

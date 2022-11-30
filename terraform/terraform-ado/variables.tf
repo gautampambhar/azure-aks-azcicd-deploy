@@ -1,4 +1,36 @@
-# Azure Location
+variable "aks_version_prefix" {
+}
+
+variable "system_pool_type" {
+}
+
+variable "system_pool_vm_size" {
+}
+variable "system_pool_autoscale_max_count" {
+}
+variable "system_pool_autoscale_min_count" {
+}
+variable "system_pool_os_disk_size_gb" {
+}
+
+variable "linux_pool_vm_size" {
+}
+variable "linux_pool_autoscale_max_count" {
+}
+variable "linux_pool_autoscale_min_count" {
+}
+variable "linux_pool_os_disk_size_gb" {
+}
+
+variable "windows_pool_vm_size" {
+}
+variable "windows_pool_autoscale_max_count" {
+}
+variable "windows_pool_autoscale_min_count" {
+}
+variable "windows_pool_os_disk_size_gb" {
+}
+
 variable "location" {
   type = string
   description = "Azure Region where all these resources will be provisioned"

@@ -21,17 +21,7 @@ stages:
           Dockerfile: '**/Dockerfile'
           tags: |
             $(tag)
-          #  $(Build.SourceVersion)      
-      
-      # Task-2: Copy files (Copy files from a source folder to target folder)
-      # Source Directory: $(System.DefaultWorkingDirectory)/kube-manifests
-      # Target Directory: $(Build.ArtifactStagingDirectory)
-      # - task: CopyFiles@2
-      #   inputs:
-      #     SourceFolder: '$(System.DefaultWorkingDirectory)/all-projects/cicd1/kube-manifests'
-      #     Contents: '**'
-      #     TargetFolder: '$(Build.ArtifactStagingDirectory)'
-      #     OverWrite: true
+          #  $(Build.SourceVersion)
       
       # Task-3: Publish build artifacts (Publish build to Azure Pipelines)           
       - task: PublishPipelineArtifact@1
@@ -102,7 +92,7 @@ stages:
                 command: 'plan'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
                 environmentServiceName: 'aks-dev-tfazrs-svc'
-                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var-file="environments/$(ENVIRONMENT)/$(ENVIRONMENT).tfvars" -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
             - task: TerraformCLI@0
               displayName: Terraform Apply
@@ -112,15 +102,6 @@ stages:
                 environmentServiceName: 'aks-dev-tfazrs-svc'
                 commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
-            
-            # Kubernetes deploy
-            # - task: KubernetesManifest@0
-            #   displayName: Create imagePullSecret
-            #   inputs:
-            #     action: createSecret
-            #     secretName: aks-dev-manifestsdeployment-svc
-            #     dockerRegistryEndpoint: 'aks-dev-acrbuild-svc'
-            #     kubernetesServiceConnection: aks-dev-manifestsdeployment-svc
                 
             - task: KubernetesManifest@0
               displayName: Deploy to Kubernetes cluster
@@ -143,11 +124,6 @@ stages:
 
                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/01-windows-app-deployment.yml
                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/02-windows-app-loadbalancer-service
-
-                  # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/01-NginxVnode-Deployment
-                  # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/02-NginxVnode-LoadBalancer-Service
-                # imagePullSecrets: |
-                #   $(imagePullSecret)
                 containers: |
                   $(containerRegistry)/$(imageRepository):$(tag)
 
@@ -203,7 +179,7 @@ stages:
 #                 command: 'plan'
 #                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
 #                 environmentServiceName: 'aks-prod-tfazrs-svc'
-#                 commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+#                 commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var-file="environments/$(ENVIRONMENT)/$(ENVIRONMENT).tfvars" -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
 #                 allowTelemetryCollection: false
 #             - task: TerraformCLI@0
 #               displayName: Terraform Apply
@@ -213,16 +189,6 @@ stages:
 #                 environmentServiceName: 'aks-prod-tfazrs-svc'
 #                 commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
 #                 allowTelemetryCollection: false
-            
-#             # Kubernetes deploy
-#             # - task: KubernetesManifest@0
-#             #   displayName: Create imagePullSecret
-#             #   inputs:
-#             #     action: createSecret
-#             #     secretName: aks-dev-manifestsdeployment-svc
-#             #     dockerRegistryEndpoint: 'aks-dev-acrbuild-svc'
-#             #     kubernetesServiceConnection: aks-dev-manifestsdeployment-svc
-                
 #             - task: KubernetesManifest@0
 #               displayName: Deploy to Kubernetes cluster
 #               inputs:
@@ -244,10 +210,5 @@ stages:
 
 #                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/01-windows-app-deployment.yml
 #                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/02-windows-app-loadbalancer-service
-
-#                   # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/01-NginxVnode-Deployment
-#                   # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/02-NginxVnode-LoadBalancer-Service
-#                 # imagePullSecrets: |
-#                 #   $(imagePullSecret)
 #                 containers: |
 #                   $(containerRegistry)/$(imageRepository):$(tag)
