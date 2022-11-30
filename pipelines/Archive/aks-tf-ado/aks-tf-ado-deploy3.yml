@@ -1,0 +1,78 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: terraform_build
+  jobs:
+    - job: terraform_build_job
+      continueOnError: false
+      steps:
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Artifacts
+        inputs:
+          targetPath: '$(System.DefaultWorkingDirectory)/terraform/terraform-ado'
+          artifact: 'terraform-manifests-out' # artifact is a Folder; This contains all the terraform build files
+          publishLocation: 'pipeline'
+
+- stage: DeployAKSClusters
+  jobs:
+    - deployment: DeployDevAKSCluster
+      displayName: DeployDevAKSCluster
+      variables:
+        ENVIRONMENT: dev
+      pool:
+        vmImage: 'ubuntu-latest'
+      environment: 'aks-dev'      
+      strategy:
+        runOnce:
+          deploy:
+            steps:            
+            - task: DownloadSecureFile@1
+              displayName: Download SSH Key
+              name: sshkey
+              inputs:
+                secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+            - task: TerraformInstaller@0
+              displayName: Terraform Install
+              inputs:
+                terraformVersion: 'latest'
+            - task: TerraformCLI@0
+              displayName: Terraform Init
+              inputs:
+                command: 'init'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                backendType: 'azurerm'
+                backendServiceArm: 'aks-dev-tfazrs-svc'
+                backendAzureRmSubscriptionId: 'dw87g699-1234-5678-9101-lp76869akka4'
+                ensureBackend: true
+                backendAzureRmResourceGroupName: 'aks-$(ENVIRONMENT)-tfstate-rg'
+                backendAzureRmResourceGroupLocation: 'eastus'
+                backendAzureRmStorageAccountName: 'aks$(ENVIRONMENT)tfstatesa'
+                backendAzureRmContainerName: 'aks$(ENVIRONMENT)tfstate'
+                backendAzureRmKey: '$(ENVIRONMENT).tfstate'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Validate
+              inputs:
+                command: 'validate'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Plan
+              inputs:
+                command: 'plan'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                environmentServiceName: 'aks-dev-tfazrs-svc'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Apply
+              inputs:
+                command: 'apply'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                environmentServiceName: 'aks-dev-tfazrs-svc'
+                commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false

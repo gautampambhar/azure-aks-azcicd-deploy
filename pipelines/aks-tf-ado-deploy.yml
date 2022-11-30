@@ -1,0 +1,253 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: AksTfBuildStage
+  jobs:
+    - job: Aks_Tf_Build_Job
+      continueOnError: false
+      steps:
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'aks-dev-acrbuild-svc'
+          repository: 'aksnginxapp1'
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          tags: |
+            $(tag)
+          #  $(Build.SourceVersion)      
+      
+      # Task-2: Copy files (Copy files from a source folder to target folder)
+      # Source Directory: $(System.DefaultWorkingDirectory)/kube-manifests
+      # Target Directory: $(Build.ArtifactStagingDirectory)
+      # - task: CopyFiles@2
+      #   inputs:
+      #     SourceFolder: '$(System.DefaultWorkingDirectory)/all-projects/cicd1/kube-manifests'
+      #     Contents: '**'
+      #     TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      #     OverWrite: true
+      
+      # Task-3: Publish build artifacts (Publish build to Azure Pipelines)           
+      - task: PublishPipelineArtifact@1
+        displayName: Publish AKS Manifets Artifacts
+        inputs:
+          targetPath: '$(System.DefaultWorkingDirectory)/all-projects/cicd1/kube-manifests'
+          ArtifactName: 'aks-manifests-out'
+          publishLocation: 'pipeline'
+      
+      # Terraform Artifact
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Tearrform build Artifacts
+        inputs:
+          targetPath: '$(System.DefaultWorkingDirectory)/terraform/terraform-ado'
+          artifact: 'terraform-manifests-out' # artifact is a Folder; This contains all the terraform build files
+          publishLocation: 'pipeline'
+
+- stage: DeployAKSToDev
+  jobs:
+    - deployment: DeployTfAksToDev
+      displayName: DeployTfAksToDev
+      variables:
+        ENVIRONMENT: dev
+        imagePullSecret: 'aks-dev-manifestsdeployment-svc'
+        containerRegistry: 'aks-dev-acrbuild-svc'
+        imageRepository: 'aksnginxapp1'
+
+      pool:
+        vmImage: 'ubuntu-latest'
+      environment: 'aks-dev'      
+      strategy:
+        runOnce:
+          deploy:
+            steps:            
+            - task: DownloadSecureFile@1
+              displayName: Download SSH Key
+              name: sshkey
+              inputs:
+                secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+            - task: TerraformInstaller@0
+              displayName: Terraform Install
+              inputs:
+                terraformVersion: 'latest'
+            - task: TerraformCLI@0
+              displayName: Terraform Init
+              inputs:
+                command: 'init'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                backendType: 'azurerm'
+                backendServiceArm: 'aks-dev-tfazrs-svc'
+                backendAzureRmSubscriptionId: 'YOUR AZ SUB ID'
+                ensureBackend: true
+                backendAzureRmResourceGroupName: 'aks-$(ENVIRONMENT)-tfstate-rg'
+                backendAzureRmResourceGroupLocation: 'eastus'
+                backendAzureRmStorageAccountName: 'aks$(ENVIRONMENT)tfstatesa'
+                backendAzureRmContainerName: 'aks$(ENVIRONMENT)tfstate'
+                backendAzureRmKey: '$(ENVIRONMENT).tfstate'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Validate
+              inputs:
+                command: 'validate'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Plan
+              inputs:
+                command: 'plan'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                environmentServiceName: 'aks-dev-tfazrs-svc'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Apply
+              inputs:
+                command: 'apply'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+                environmentServiceName: 'aks-dev-tfazrs-svc'
+                commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
+            
+            # Kubernetes deploy
+            # - task: KubernetesManifest@0
+            #   displayName: Create imagePullSecret
+            #   inputs:
+            #     action: createSecret
+            #     secretName: aks-dev-manifestsdeployment-svc
+            #     dockerRegistryEndpoint: 'aks-dev-acrbuild-svc'
+            #     kubernetesServiceConnection: aks-dev-manifestsdeployment-svc
+                
+            - task: KubernetesManifest@0
+              displayName: Deploy to Kubernetes cluster
+              inputs:
+                action: deploy
+                kubernetesServiceConnection: aks-dev-manifestsdeployment-svc
+                manifests: |
+                  $(Pipeline.Workspace)/aks-manifests-out/001-sample-nginx-app/01-Deployment-and-LoadBalancer-Service.yml
+
+                  $(Pipeline.Workspace)/aks-manifests-out/01-Webserver-Apps/01-NginxApp1-Deployment.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/01-Webserver-Apps/02-NginxApp1-LoadBalancer-Service.yml
+
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/00-storage-class.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/01-persistent-volume-claim.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/02-UserManagement-ConfigMap.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/03-mysql-deployment.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/04-mysql-clusterip-service.yml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/06-UserMgmtWebApp-Deploymentyml
+                  $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/07-UserMgmtWebApp-Service.yml
+
+                  # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/01-windows-app-deployment.yml
+                  # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/02-windows-app-loadbalancer-service
+
+                  # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/01-NginxVnode-Deployment
+                  # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/02-NginxVnode-LoadBalancer-Service
+                # imagePullSecrets: |
+                #   $(imagePullSecret)
+                containers: |
+                  $(containerRegistry)/$(imageRepository):$(tag)
+
+# - stage: DeployAKSToProd
+#   jobs:
+#     - deployment: DeployTfAksToProd
+#       displayName: DeployTfAksToProd
+#       variables:
+#         ENVIRONMENT: prod
+#         imagePullSecret: 'aks-prod-manifestsdeployment-svc'
+#         containerRegistry: 'aks-prod-acrbuild-svc'
+#         imageRepository: 'aksnginxapp1'
+#       pool:
+#         vmImage: 'ubuntu-latest'
+#       environment: 'aks-prod'      
+#       strategy:
+#         runOnce:
+#           deploy:
+#             steps:            
+#             - task: DownloadSecureFile@1
+#               displayName: Download SSH Key
+#               name: sshkey
+#               inputs:
+#                 secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+#             - task: TerraformInstaller@0
+#               displayName: Terraform Install
+#               inputs:
+#                 terraformVersion: 'latest'
+#             - task: TerraformCLI@0
+#               displayName: Terraform Init
+#               inputs:
+#                 command: 'init'
+#                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+#                 backendType: 'azurerm'
+#                 backendServiceArm: 'aks-prod-tfazrs-svc'
+#                 backendAzureRmSubscriptionId: 'YOUR AZ SUB ID'
+#                 ensureBackend: true
+#                 backendAzureRmResourceGroupName: 'aks-$(ENVIRONMENT)-tfstate-rg'
+#                 backendAzureRmResourceGroupLocation: 'eastus'
+#                 backendAzureRmStorageAccountName: 'aks$(ENVIRONMENT)tfstatesa'
+#                 backendAzureRmContainerName: 'aks$(ENVIRONMENT)tfstate'
+#                 backendAzureRmKey: '$(ENVIRONMENT).tfstate'
+#                 allowTelemetryCollection: false
+#             - task: TerraformCLI@0
+#               displayName: Terraform Validate
+#               inputs:
+#                 command: 'validate'
+#                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+#                 allowTelemetryCollection: false
+#             - task: TerraformCLI@0
+#               displayName: Terraform Plan
+#               inputs:
+#                 command: 'plan'
+#                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+#                 environmentServiceName: 'aks-prod-tfazrs-svc'
+#                 commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+#                 allowTelemetryCollection: false
+#             - task: TerraformCLI@0
+#               displayName: Terraform Apply
+#               inputs:
+#                 command: 'apply'
+#                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+#                 environmentServiceName: 'aks-prod-tfazrs-svc'
+#                 commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(ENVIRONMENT)-$(Build.BuildId).out'
+#                 allowTelemetryCollection: false
+            
+#             # Kubernetes deploy
+#             # - task: KubernetesManifest@0
+#             #   displayName: Create imagePullSecret
+#             #   inputs:
+#             #     action: createSecret
+#             #     secretName: aks-dev-manifestsdeployment-svc
+#             #     dockerRegistryEndpoint: 'aks-dev-acrbuild-svc'
+#             #     kubernetesServiceConnection: aks-dev-manifestsdeployment-svc
+                
+#             - task: KubernetesManifest@0
+#               displayName: Deploy to Kubernetes cluster
+#               inputs:
+#                 action: deploy
+#                 kubernetesServiceConnection: aks-prod-manifestsdeployment-svc
+#                 manifests: |
+#                   $(Pipeline.Workspace)/aks-manifests-out/001-sample-nginx-app/01-Deployment-and-LoadBalancer-Service.yml
+
+#                   $(Pipeline.Workspace)/aks-manifests-out/01-Webserver-Apps/01-NginxApp1-Deployment.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/01-Webserver-Apps/02-NginxApp1-LoadBalancer-Service.yml
+
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/00-storage-class.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/01-persistent-volume-claim.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/02-UserManagement-ConfigMap.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/03-mysql-deployment.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/04-mysql-clusterip-service.yml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/06-UserMgmtWebApp-Deploymentyml
+#                   $(Pipeline.Workspace)/aks-manifests-out/02-Java-Apps/07-UserMgmtWebApp-Service.yml
+
+#                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/01-windows-app-deployment.yml
+#                   # $(Pipeline.Workspace)/aks-manifests-out/03-Windows-DotNet-Apps/02-windows-app-loadbalancer-service
+
+#                   # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/01-NginxVnode-Deployment
+#                   # $(Pipeline.Workspace)/aks-manifests-out/04-VirtualNode-Apps/02-NginxVnode-LoadBalancer-Service
+#                 # imagePullSecrets: |
+#                 #   $(imagePullSecret)
+#                 containers: |
+#                   $(containerRegistry)/$(imageRepository):$(tag)
