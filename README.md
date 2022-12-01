@@ -14,13 +14,15 @@ This project also has readme files in the `RAEDMEs/` to quickly understand the c
 # Deploy 
 To deploy this project with the Azure YAML pipeline, please read `RAEDMEs/README-PROF-DEPLOY` and mimic the steps in your azure environments.  
 
+It is going to deploy 4 applications(2 standard nginx and 1 java app with MySql database and 1 DotNet application) on AKS system node pool(Linux) and User node pool(Linux + Windows). Manfiests files for application workload can be found in `all-projects/cicd1/kube-manifests`
+
 # CICD Pipeline Features 
 - Build and push application docker images to Azure Container Registry(ACR)
 - Create multi-environment Azure AKS infrastruture with Terraform 
 - Deploy Application Kubernetes manifests file to AKS 
 
-# Auth 
-- Assigned RBAC Roles with Terraform using Azure Active Directory to grant AKS access to respective teams.
+# Auth to AKS
+- Authorization access to AKS works with Azure RBAC Roles with Terraform using Azure Active Directory to grant AKS access to respective teams.
 
 # Credits 
 - Few concepts are borrowed from the stacksimplify Udemy course
