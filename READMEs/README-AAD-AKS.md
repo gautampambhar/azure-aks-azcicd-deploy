@@ -77,13 +77,13 @@
     - Role Binding: is a subject(Someone) who perform the actions on AKS cluster. ex: Azure group(having users) is the subject
     
     **RBAC Role**
-    [RBAC Role](../Images/01-RBAC-role.png)
+    ![RBAC Role](../Images/01-RBAC-role.png)
     
     **RBAC Role Binding**
-    [RBAC Role Binding](../Images/01-RBAC-role-binding.png)
+    ![RBAC Role Binding](../Images/01-RBAC-role-binding.png)
     
     **RBAC Role Binding Complete View**
-    [RBAC Role Binding Complete View](../Images/01-RBAC-rb-view.png)
+    ![RBAC Role Binding Complete View](../Images/01-RBAC-rb-view.png)
 
 **How - Steps**
 Task: Create a Azure group, create Azure users, assign role to Azure group 
@@ -100,13 +100,13 @@ Task: Create a Azure group, create Azure users, assign role to Azure group
     - What: This is similar to role and role binding. Only difference is, this operates at cluster level. so you can list, read, create, delete on a cluster level.
     
     **RBAC Cluster Role**
-    [RBAC Cluster Role](../Images/01-RBAC-clusterrole.png)
+    ![RBAC Cluster Role](../Images/01-RBAC-clusterrole.png)
     
     **RBAC Cluster Role Binding**
-    [RBAC Cluster Role Binding](../Images/01-RBAC-clusterrole-binding.png)
+    ![RBAC Cluster Role Binding](../Images/01-RBAC-clusterrole-binding.png)
     
     **RBAC Cluster Role Binding Complete View**
-    [RBAC Cluster Role Binding Complete View](../Images/01-RBAC-crb-view.png)
+    ![RBAC Cluster Role Binding Complete View](../Images/01-RBAC-crb-view.png)
 
 **How - Steps**
 Task: Create a group in Azure with a role. Create a Kubernetes RBAC role that has only read level access to Kubernetes Cluster 
