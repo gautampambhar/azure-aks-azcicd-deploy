@@ -58,6 +58,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
 # Identity (System Assigned or Service Principal)
+  # Why: AKS needs its own identity to create additional resources like load balancers and managed disks 
   identity {
     type = "SystemAssigned"
   }

@@ -4,7 +4,7 @@ metadata:
   name: managed-premium-retain-sc
 provisioner: kubernetes.io/azure-disk
 reclaimPolicy: Retain  # Default is Delete, recommended is retain, This won't delete disk data untill you have AKS cluster. once you delete ASK cluster, this will also get deleted
-volumeBindingMode: WaitForFirstConsumer # Default is Immediate, recommended is WaitForFirstConsumer(wait for the first to be created, once pod is there, create volumeBindingMode)
+volumeBindingMode: WaitForFirstConsumer # Default is Immediate, recommended is WaitForFirstConsumer(wait for the first workload/pod to be created, once pod is there, create volumeBindingMode)
 allowVolumeExpansion: true  
 parameters:
   storageaccounttype: Premium_LRS # or we can use Standard_LRS

@@ -8,7 +8,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: / # root
+          - path: / # root: forward traffic to the service mentioned below
             pathType: Prefix
             backend:
               service:

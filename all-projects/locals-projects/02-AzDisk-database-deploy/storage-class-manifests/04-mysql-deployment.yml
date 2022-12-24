@@ -24,14 +24,14 @@ spec:
             - containerPort: 3306
               name: mysql    
           volumeMounts:
-            - name: mysql-persistent-storage
+            - name: mysql-persistent-storage # Name of the volume listed in the volumes below
               mountPath: /var/lib/mysql    
-            - name: usermanagement-dbcreation-script
+            - name: usermanagement-dbcreation-script # Name of the volume listed in the volumes below
               mountPath: /docker-entrypoint-initdb.d #https://hub.docker.com/_/mysql Refer Initializing a fresh instance                                            
-      volumes: 
-        - name: mysql-persistent-storage
-          persistentVolumeClaim:
-            claimName: azure-managed-disk-pvc
+      volumes: # Pod spec level resource, map/mount volume to pod
+        - name: mysql-persistent-storage # Any name
+          persistentVolumeClaim: 
+            claimName: azure-managed-disk-pvc # PVC name
         - name: usermanagement-dbcreation-script
           configMap:
             name: usermanagement-dbcreation-script

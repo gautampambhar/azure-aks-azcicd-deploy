@@ -27,7 +27,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-backend-service ## VERY VERY IMPORTANT - NGINX PROXYPASS needs this name
+  name: my-backend-service ## VERY VERY IMPORTANT - NGINX PROXYPASS needs this name ### Because we have coded this name in our frontend Nginx reverse proxy,
   labels:
     app: backend-restapp
     tier: backend   
