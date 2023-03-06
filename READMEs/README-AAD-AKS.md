@@ -37,7 +37,7 @@
 
 ## AKS + Azure AD authenication + Kubernetes RBAC
 
-**Key Concepts **
+**Key Concepts**
 1. Role
 2. Role Binding
 3. Cluster Role

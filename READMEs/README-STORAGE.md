@@ -6,8 +6,8 @@
         - You will need to create storage class yaml which is custom(to your need) 
         - why custom class: you define what reclaimPolicy, volumeBindingMode, allowVolumeExpansion, parameters
     - **System Provisioned Storage Class** - AKS default class for creating workloads ```azure-aks-azcicd-deploy/all-projects/local-projects/02-AzDisk-database-deploy/system-provisioned-manifests```
-        - You get default storage class with AKS so will won't need to create storage class yaml
-        - why ystem Provisioned Storage Class: it comes with pre-configured storage settings. ex: storage gets deleted when you delete pod
+        - You get default storage class with AKS so you won't need to create storage class yaml
+        - why System Provisioned Storage Class: it comes with pre-configured storage settings. ex: storage gets deleted when you delete pod
 2. Persistant volum claim: this will needed, storage to be created, to store data from the pod(specify how much storage you need. ex: storage: 5Gi ). This actually create storage with capacity you defined in the storage class.
     - Persistant volum: this will create storage mentioned in the pvc
 4. ConfigMap: 
@@ -80,7 +80,7 @@ mysql> show schemas;
 #### Create MySQL Database on Azure
 - servername: akstestudemydb
 - admin username: dbadmin
-- admin password: Igotam2711@Ca
+- admin password: elddwedf@jwis!G2
 
 #### Connect to MySQL Database
 ```

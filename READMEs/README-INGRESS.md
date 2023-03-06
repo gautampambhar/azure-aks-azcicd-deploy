@@ -20,8 +20,8 @@ After Ingress
 
 ### Features
 - TLS/SSL termination(process of decrypting encrypted traffic before passing it along to a web server.) 
-- Context part-based routing
-- Host name-based routing.
+- Context path-based routing: URL based routing. ex: direct app1/ to certain location
+- Host name-based routing: Domain name based routing. ex: list domains and route traffic based on domains
 
 **Ingress Terminalogy**
 ![Ingress Terminalogy](../Images/01-ingress-terminalogy.png)
