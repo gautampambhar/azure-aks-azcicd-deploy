@@ -81,6 +81,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
 # Linux Profile
+  # Since this is linux machine; you'll need username and SSH key for this machine so that you can access it when you want to
   linux_profile {
     admin_username = "ubuntu"
     ssh_key {
@@ -89,6 +90,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
 # Network Profile
+  # This will tell AKS what network plugins to use
   network_profile {
     network_plugin = "azure"
     load_balancer_sku = "standard"

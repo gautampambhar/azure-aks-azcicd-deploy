@@ -27,9 +27,11 @@
 2. Worker node
     - Kubelet: Kubelet is the agent that runs on every node in the cluster. This agent is responsible for making sure that containers are running in a Pod on a node.
     - Kube-Proxy: It is a network proxy that runs on each node in your cluster and maintains network rules on nodes. In short, these network rules allow network communication to your Pods from network sessions inside or outside of your cluster.
+
 ![K8S Arch](../Images/k8s-arch.png)
 
 3. Fundamentals 
+
 ![K8S Funda](../Images/k8s-funda.png)
 
 ## 03 - Create AKS Cluster 
@@ -212,21 +214,17 @@ Primarily refer Settings -> Frontend IP Configuration
 ## Step-9: Create Ingress SSL: Cert manager and Let's incrypt 
 1. Install Cert manager using helm: is a native Kubernetes certificate management controller which helps with issuing certificates from a variety of sources(Let's incrypt ). It will ensure certificates are valid and up to date, and attempt to renew certificates at a configured time before expiry.
   - Cert manager, takes generated CSR certificate and submit to Let's incrypt automatically
-2. use TLS options in ingress service to create domain specific **Secret**. each domain will have their own secret
+2. Use TLS options in ingress service to create domain specific **Secret**. each domain will have their own secret
 3. Configure cert manager to use let's encrypt as certificate provider. 
   - Cert manager will submit the CSR to Let's incrypt and get the certs from Let's incrypt and then apply certs to our application
 
 
 
-
-
-
-
-1. create aks cluster 
-2. application deployment 
+1. Create aks cluster 
+2. Application deployment 
   1. Nginx ingress controller 
     1. Create PIP
-    2. install helm
-    3. install nginx ingress
-  2. install externalDns
+    2. Install helm
+    3. Install nginx ingress
+  2. Install externalDns
   3. Cert Manager
